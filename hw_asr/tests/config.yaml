@@ -1,0 +1,68 @@
+name: test_config
+n_gpu: 1
+text_encoder:
+  _target_: hw_asr.text_encoder.ctc_char_text_encoder.CTCCharTextEncoder
+preprocessing:
+  sr: 16000
+  spectrogram:
+    _target_: torchaudio.transforms.MelSpectrogram
+  log_spec: true
+augmentations:
+  wave: []
+  spectrogram: []
+arch:
+  _target_: hw_asr.model.baseline_model.BaselineModel
+  n_feats: 128
+  fc_hidden: 512
+data:
+  train:
+    batch_size: 20
+    num_workers: 0
+    datasets:
+    - _target_: hw_asr.datasets.LibrispeechDataset
+      part: dev-clean
+      max_audio_length: 20
+      max_text_length: 200
+  val:
+    batch_size: 20
+    num_workers: 0
+    datasets:
+      - _target_: hw_asr.datasets.LibrispeechDataset
+        part: dev-clean
+        max_audio_length: 20
+        max_text_length: 200
+optimizer:
+  _target_: torch.optim.SGD
+  lr: 0.0003
+loss:
+  _target_: hw_asr.loss.CTCLoss
+metrics:
+  shared: 
+    - _target_: hw_asr.metric.ArgmaxWERMetric
+      name: WER (argmax)
+    - _target_: hw_asr.metric.ArgmaxCERMetric
+      name: CER (argmax)
+  train: []
+  evaluation:
+    - _target_: hw_asr.metric.BeamSearchWERMetric
+      name: WER (beam search)
+    - _target_: hw_asr.metric.BeamSearchCERMetric
+      name: CER (beam search)
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  steps_per_epoch: ${trainer.len_epoch}
+  epochs: ${trainer.epochs}
+  anneal_strategy: cos
+  max_lr: 0.004
+  pct_start: 0.2
+trainer:
+  epochs: 50
+  save_dir: saved/
+  save_period: 5
+  verbosity: 2
+  monitor: min val_loss
+  early_stop: 100
+  visualize: wandb
+  wandb_project: asr_project
+  len_epoch: 100
+  grad_norm_clip: 10

@@ -1,0 +1,130 @@
+hydra:
+  run:
+    dir: ./train_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+platform: "local"
+mode: "train"
+keyboard_interrupt_save: false
+
+datasets_targets:
+  local: hw_asr.datasets.LibrispeechDataset
+  datasphere: hw_asr.datasets.DataSphereLibrispeechDataset
+
+train_clean_100:
+  _target_: ${datasets_targets[${platform}]}
+  part: "train-clean-100"
+  max_audio_length: 16.7
+  max_text_length: 200
+  filter_punctuation: true
+
+train_clean_360:
+  _target_: ${datasets_targets[${platform}]}
+  part: "train-clean-360"
+  max_audio_length: 16.7
+  max_text_length: 200
+  filter_punctuation: true
+
+train_other_500:
+  _target_: ${datasets_targets[${platform}]}
+  part: "train-other-500"
+  max_audio_length: 16.7
+  max_text_length: 200
+  filter_punctuation: true
+
+dev_clean:
+  _target_: ${datasets_targets[${platform}]}
+  part: "dev-clean"
+  limit: 10
+
+test_clean:
+  _target_: ${datasets_targets[${platform}]}
+  part: "test-clean"
+
+test_other:
+  _target_: ${datasets_targets[${platform}]}
+  part: "test-other"
+
+test:
+  _target_: hw_asr.datasets.CustomDirAudioDataset
+  audio_dir: "test_data/audio"
+  transcription_dir: "test_data/transcriptions"
+
+text_encoder:
+  _target_: hw_asr.text_encoder.ctc_char_text_encoder.CTCCharTextEncoder
+  lm_params:
+    vocab_path: "language_model/librispeech-vocab.txt"
+    kenlm_model_path: "language_model/lowercase_3-gram.arpa"
+augmentations:
+  wave: []
+  spectrogram:
+    - _target_: hw_asr.augmentations.spectrogram_augmentations.SpecAug
+      freq_masks: 2
+      time_masks: 5
+      freq_width: 27
+      time_width: 0.05
+data:
+  train:
+    batch_size: 32
+    num_workers: 8
+    datasets: 
+      - ${train_clean_100}
+      - ${train_clean_360}
+      - ${train_other_500}
+  test-other:
+    batch_size: 32
+    num_workers: 8
+    datasets:
+      - ${test_other}
+  test-clean:
+    batch_size: 32
+    num_workers: 8
+    datasets:
+      - ${test_clean}
+preprocessing:
+  sr: 16000
+  spectrogram:
+    _target_: torchaudio.transforms.MelSpectrogram
+    n_mels: 80
+  log_spec: true
+arch:
+  _target_: hw_asr.model.ConformerEncoder
+  embed_dim: 80
+  encoder_dim: 256
+  n_layers: 16
+  num_heads: 4
+  dropout: 0.1
+  kernel_size: 31
+n_gpu: 1
+loss:
+  _target_: hw_asr.loss.CTCLoss
+metrics:
+  shared: 
+    - _target_: hw_asr.metric.ArgmaxWERCERMetric
+      name: ARGMAX
+  train: []
+  evaluation:
+    - _target_: hw_asr.metric.BeamSearchWERCERMetric
+      name: BS
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 5.0
+  weight_decay: 0
+lr_scheduler:
+  _target_: hw_asr.scheduler.WarmUpScheduler
+  warmup_steps: 10000
+  min_lr: 1e-6
+  d_model: ${arch.encoder_dim}
+trainer:
+  epochs: 100
+  save_dir: "saved/"
+  save_period: 1
+  verbosity: 2
+  monitor: "min val_loss"
+  early_stop: 100
+  visualize: "wandb"
+  wandb_project: "asr_project"
+  len_epoch: 10000
+  grad_norm_clip: 10
+  log_step: 100
+  accumulation_steps: 4
+resume: null

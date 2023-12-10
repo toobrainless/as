@@ -1,0 +1,57 @@
+hydra:
+  run:
+    dir: ./test_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+platform: "local"
+mode: "train"
+keyboard_interrupt_save: false
+
+datasets_targets:
+  local: hw_asr.datasets.LibrispeechDataset
+  datasphere: hw_asr.datasets.DataSphereLibrispeechDataset
+
+test_clean:
+  _target_: ${datasets_targets[${platform}]}
+  part: "test-clean"
+
+test_other:
+  _target_: ${datasets_targets[${platform}]}
+  part: "test-other"
+
+checkpoint_path: "asr_model/checkpoint-epoch22.pth"
+
+metrics:
+    - _target_: hw_asr.metric.ArgmaxWERCERMetric
+      name: ARGMAX
+    - _target_: hw_asr.metric.BeamSearchWERCERMetric
+      name: BS
+      beam_size: 150
+    - _target_: hw_asr.metric.LMBeamSearchWERCERMetric
+      name: BS+LM
+      beam_size: 150
+    # - _target_: hw_asr.metric.CustomBeamSearchWERCERMetric
+    #   name: CUSTOM BS
+    #   beam_size: 4
+
+preprocessing:
+  sr: 16000
+  spectrogram:
+    _target_: torchaudio.transforms.MelSpectrogram
+    n_mels: 80
+  log_spec: true
+
+data:
+  test-other:
+    batch_size: 8
+    num_workers: 8
+    datasets:
+      - ${test_other}
+  test-clean:
+    batch_size: 8
+    num_workers: 8
+    datasets:
+      - ${test_clean}
+
+n_gpu: 1
+
+

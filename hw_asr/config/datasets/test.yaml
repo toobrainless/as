@@ -1,0 +1,4 @@
+# @package datasets.test
+_target_: hw_asr.datasets.CustomDirAudioDataset
+audio_dir: "/Users/arturgimranov/CS/fourth_year/dla_course/asr_hw/test_data/audio"
+transcription_dir: "/Users/arturgimranov/CS/fourth_year/dla_course/asr_hw/test_data/transcriptions"

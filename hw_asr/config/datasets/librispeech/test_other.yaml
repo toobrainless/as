@@ -1,0 +1,3 @@
+# @package datasets.librispeech_test_other
+_target_: hw_asr.datasets.LibrispeechDataset
+part: "test-other"
