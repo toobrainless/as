@@ -1,0 +1,67 @@
+hydra:
+  run:
+    dir: ./train_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+data:
+  train:
+    batch_size: 4
+    num_workers: 4
+    datasets: 
+      - _target_: src.datasets.ASVspoofDataset
+        protocol_path: "/Users/arturgimranov/CS/fourth_year/dla_course/as/archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt"
+        data_path: "/Users/arturgimranov/CS/fourth_year/dla_course/as/archive/LA/LA/ASVspoof2019_LA_train/flac"
+  eval:
+    batch_size: 32
+    num_workers: 4
+    datasets: 
+      - _target_: src.datasets.ASVspoofDataset
+        protocol_path: "/Users/arturgimranov/CS/fourth_year/dla_course/as/archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+        data_path: "/Users/arturgimranov/CS/fourth_year/dla_course/as/archive/LA/LA/ASVspoof2019_LA_eval/flac"
+        limit: 32
+preprocessing:
+  sr: 16000
+arch:
+  _target_: src.model.RawNet2
+  gru_prenorm: True
+  gru_num_layers: 3
+  reslayer1_out_channels: 20
+  reslayer2_out_channels: 128
+  sinc_abs_after: True
+  sinc_min_low_hz: 0
+  sinc_min_band_hz: 0
+  sinc_requires_grad: False
+n_gpu: 1
+metrics:
+  shared: []
+#     - _target_: src.metric.AccuracyMetric
+#     - _target_: src.metric.PESQMetric
+#     - _target_: src.metric.SISDRMetric
+  train: []
+  evaluation:
+    - _target_: src.metric.EERMetric
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+  weight:
+    _target_: torch.tensor
+    data:
+      - 0.1
+      - 0.9
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1e-4
+  weight_decay: 1e-4
+trainer:
+  epochs: 1000
+  save_dir: "saved/"
+  save_period: 1
+  verbosity: 2
+  monitor: "min eval_loss"
+  early_stop: 100
+  visualize: "wandb"
+  wandb_project: "as_project"
+  wandb_project_name: "test_run_with_eer"
+  len_epoch: 100
+  grad_norm_clip: 10
+  log_step: 100
+  accumulation_steps: 1
+resume: null

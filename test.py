@@ -4,16 +4,17 @@ import os
 import sys
 from pathlib import Path
 from string import ascii_lowercase
+
 import hydra
 import torch
 from hydra.utils import get_original_cwd, instantiate, to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-from hw_asr.trainer import Trainer
-from hw_asr.utils import MetricTracker
-from hw_asr.utils.object_loading import get_dataloaders
-from hw_asr.utils.util import ROOT_PATH
+from src.trainer import Trainer
+from src.utils import MetricTracker
+from src.utils.object_loading import get_dataloaders
+from src.utils.util import ROOT_PATH
 
 
 @hydra.main(version_base=None, config_path="hw_asr/config", config_name="test")

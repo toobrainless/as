@@ -13,9 +13,9 @@ from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_original_cwd, instantiate
 from omegaconf import DictConfig, OmegaConf
 
-from hw_asr.trainer import Trainer
-from hw_asr.utils import prepare_device
-from hw_asr.utils.object_loading import get_dataloaders
+from src.trainer import Trainer
+from src.utils import prepare_device
+from src.utils.object_loading import get_dataloaders
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -27,7 +27,7 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 
-@hydra.main(version_base=None, config_path="hw_asr/config", config_name="train")
+@hydra.main(version_base=None, config_path="src/config", config_name="train")
 def main(cfg: DictConfig):
     OmegaConf.resolve(cfg)
     logger = logging.getLogger("train")
@@ -44,33 +44,23 @@ def main(cfg: DictConfig):
     OmegaConf.resolve(cfg)
     print(OmegaConf.to_yaml(cfg))
 
-    alphabet = list(ascii_lowercase + " ")
-    text_encoder = instantiate(cfg.text_encoder, alphabet=alphabet)
+    dataloaders = get_dataloaders(cfg)
 
-    # setup data_loader instances
-    dataloaders = get_dataloaders(cfg, text_encoder)
-
-    # build model architecture, then print to console
-    model = instantiate(cfg["arch"], n_class=len(text_encoder))
+    model = instantiate(cfg["arch"])
     logger.info(model)
 
-    # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(cfg["n_gpu"])
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    # get function handles of loss and metrics
-    loss_module = instantiate(cfg["loss"], blank=len(alphabet)).to(device)
+    loss_module = instantiate(cfg["loss"]).to(device)
+
     metrics = {
-        metric_type: [
-            instantiate(metric, text_encoder=text_encoder) for metric in metrics_list
-        ]
+        metric_type: [instantiate(metric) for metric in metrics_list]
         for metric_type, metrics_list in cfg["metrics"].items()
     }
 
-    # build optimizer, learning rate scheduler. delete every line containing lr_scheduler for
-    # disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = instantiate(cfg["optimizer"], params=trainable_params)
     if cfg.get("lr_scheduler", None) is not None:
@@ -83,34 +73,19 @@ def main(cfg: DictConfig):
         loss_module,
         metrics,
         optimizer,
-        text_encoder=text_encoder,
         config=cfg,
         device=device,
         dataloaders=dataloaders,
         lr_scheduler=lr_scheduler,
         len_epoch=cfg["trainer"].get("len_epoch", None),
-        keyboard_interrupt_save=cfg["keyboard_interrupt_save"],
+        keyboard_interrupt_save=cfg.get("keyboard_interrupt_save", False),
     )
 
-    if cfg["mode"] == "train":
-        trainer.train()
-    elif cfg["mode"] == "profile":
-        from torch.profiler import ProfilerActivity, profile, record_function
-
-        with profile(activities=[ProfilerActivity.CPU], record_shapes=True) as prof:
-            with record_function("model_inference"):
-                trainer._train_epoch(0)
-        with open("profiler_results.txt", "w") as f:
-            print(
-                prof.key_averages().table(sort_by="cpu_time_total", row_limit=10),
-                file=f,
-            )
-    else:
-        assert False, "wrong mode"
+    trainer.train()
 
 
 if __name__ == "__main__":
     sys.argv.append("hydra.job.chdir=True")
-    print("start training")
+    print("Start training...")
     os.environ["HYDRA_FULL_ERROR"] = "1"
     main()

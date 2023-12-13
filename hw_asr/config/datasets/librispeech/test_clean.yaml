@@ -1,3 +1,0 @@
-# @package datasets.librispeech_test_clean
-_target_: hw_asr.datasets.LibrispeechDataset
-part: "test-clean"
