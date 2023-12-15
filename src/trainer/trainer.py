@@ -1,17 +1,11 @@
-import random
 from pathlib import Path
 from random import shuffle
 
 import pandas as pd
-import PIL
 import torch
-import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
-from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
-from src.logger.utils import plot_spectrogram_to_buf
-from src.metric import EERMetric
 from src.utils import MetricTracker, inf_loop
 
 from .base_trainer import BaseTrainer
@@ -185,18 +179,12 @@ class Trainer(BaseTrainer):
             with torch.no_grad():
                 metrics.update("loss", batch["loss"].item())
                 for met in self.metrics["shared"]:
-                    if isinstance(met, EERMetric):
-                        continue
                     metrics.update(met.name, met(**batch))
                 if is_train:
                     for met in self.metrics["train"]:
-                        if isinstance(met, EERMetric):
-                            continue
                         metrics.update(met.name, met(**batch))
                 else:
                     for met in self.metrics["evaluation"]:
-                        if isinstance(met, EERMetric):
-                            continue
                         metrics.update(met.name, met(**batch))
         return batch
 
@@ -209,8 +197,6 @@ class Trainer(BaseTrainer):
         """
         self.model.eval()
         self.evaluation_metrics.reset()
-        logits = []
-        targets = []
         with torch.no_grad():
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),
@@ -223,17 +209,11 @@ class Trainer(BaseTrainer):
                     is_train=False,
                     metrics=self.evaluation_metrics,
                 )
-                logits.append(batch["logits"])
-                targets.append(batch["target"])
-            logits = torch.cat(logits)
-            targets = torch.cat(targets)
 
             # TODO: fix that dumb logic
             for met in self.metrics["evaluation"]:
-                if isinstance(met, EERMetric):
-                    self.evaluation_metrics.update(
-                        met.name, met(target=targets, logits=logits)
-                    )
+                if met.epoch_based:
+                    self.evaluation_metrics.update(met.name, met.calculate())
 
             self.writer.set_step(epoch * self.len_epoch, part)
             self._log_scalars(self.evaluation_metrics)

@@ -87,6 +87,8 @@ class MetricTracker:
         self._data.average[key] = self._data.total[key] / self._data.counts[key]
 
     def update(self, metric_name, metric_value, n=1):
+        if metric_value is None:
+            return
         if isinstance(metric_value, dict):
             for key, value in metric_value.items():
                 self._one_dim_update(f"{metric_name}_{key}", value, n)

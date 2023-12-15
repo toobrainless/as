@@ -4,8 +4,7 @@ import torch
 from hydra import compose, initialize
 from hydra.utils import instantiate
 
-from src.datasets import (CustomAudioDataset, CustomDirAudioDataset,
-                          LibrispeechDataset)
+from src.datasets import CustomAudioDataset, CustomDirAudioDataset, LibrispeechDataset
 from src.utils import ROOT_PATH
 
 

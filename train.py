@@ -3,7 +3,6 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from string import ascii_lowercase
 
 import hydra
 import numpy as np
@@ -27,6 +26,10 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 
+def number_of_weights(nn):
+    return sum(p.numel() for p in nn.parameters() if p.requires_grad)
+
+
 @hydra.main(version_base=None, config_path="src/config", config_name="train")
 def main(cfg: DictConfig):
     OmegaConf.resolve(cfg)
@@ -47,6 +50,7 @@ def main(cfg: DictConfig):
     dataloaders = get_dataloaders(cfg)
 
     model = instantiate(cfg["arch"])
+    print(f"{number_of_weights(model)=}")
     logger.info(model)
 
     device, device_ids = prepare_device(cfg["n_gpu"])

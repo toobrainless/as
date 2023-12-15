@@ -30,4 +30,4 @@ class SwitchABS(nn.Module):
         if self.is_on:
             return torch.abs(x)
         else:
-            x
+            return x

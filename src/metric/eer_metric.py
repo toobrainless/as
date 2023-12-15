@@ -1,4 +1,4 @@
-from typing import List
+import torch
 
 from .base_metric import BaseMetric
 from .utils import compute_eer
@@ -6,13 +6,25 @@ from .utils import compute_eer
 
 class EERMetric(BaseMetric):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, epoch_based=True, **kwargs)
+        self.logits = []
+        self.targets = []
 
     def __call__(self, logits, target, **kwargs):
+        self.logits.append(logits)
+        self.targets.append(target)
+
+        return None
+
+    def calculate(self):
+        logits = torch.cat(self.logits)
+        targets = torch.cat(self.targets)
+
         true_scores = logits.detach().cpu().numpy()[..., 1]
-        target = target.detach().cpu().numpy()
+        target = targets.detach().cpu().numpy()
 
-        print(f"{logits.shape=}")
-        print(f"{target.shape=}")
+        ans = compute_eer(true_scores[target == 1], true_scores[target == 0])[0]
+        self.logits = []
+        self.targets = []
 
-        return compute_eer(true_scores[target == 1], true_scores[target == 0])[0]
+        return ans
