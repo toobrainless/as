@@ -28,7 +28,7 @@ class RawNet2(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             SincConv_fast(
-                out_channels=128,
+                out_channels=reslayer1_out_channels,
                 kernel_size=sinc_kernel_size,
                 min_low_hz=sinc_min_low_hz,
                 min_band_hz=sinc_min_band_hz,
@@ -36,10 +36,12 @@ class RawNet2(nn.Module):
             ),
             SwitchABS(sinc_abs_after),
             nn.MaxPool1d(3),
-            nn.BatchNorm1d(128),
+            nn.BatchNorm1d(reslayer1_out_channels),
             nn.LeakyReLU(),
             ResLayer(
-                in_channels=128, out_channels=reslayer1_out_channels, num_blocks=2
+                in_channels=reslayer1_out_channels,
+                out_channels=reslayer1_out_channels,
+                num_blocks=2,
             ),
             ResLayer(
                 in_channels=reslayer1_out_channels,

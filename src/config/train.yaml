@@ -64,8 +64,8 @@ trainer:
   early_stop: 1000
   visualize: "wandb"
   wandb_project: "as_project"
-  wandb_project_name: "all_hint_included"
-  len_epoch: 2000
+  wandb_project_name: "all_hints_included"
+  len_epoch: 5000
   grad_norm_clip: 10
   log_step: 100
   accumulation_steps: 1
