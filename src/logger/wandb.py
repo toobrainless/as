@@ -22,6 +22,7 @@ class WanDBWriter:
             wandb.init(
                 project=config["trainer"].get("wandb_project"),
                 name=config["trainer"].get("wandb_project_name"),
+                tags=config["trainer"].get("wandb_project_tags"),
                 config=OmegaConf.to_container(config),
             )
             self.wandb = wandb

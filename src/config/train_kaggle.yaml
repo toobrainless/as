@@ -1,0 +1,74 @@
+hydra:
+  run:
+    dir: ./train_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+data:
+  train:
+    batch_size: 32
+    num_workers: 8
+    datasets: 
+      - _target_: src.datasets.ASVspoofDataset
+        protocol_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt"
+        data_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_train/flac"
+  eval:
+    batch_size: 32
+    num_workers: 8
+    datasets: 
+      - _target_: src.datasets.ASVspoofDataset
+        protocol_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+        data_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_eval/flac"
+  dev:
+    batch_size: 32
+    num_workers: 8
+    datasets: 
+      - _target_: src.datasets.ASVspoofDataset
+        protocol_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt"
+        data_path: "/kaggle/input/asvpoof-2019-dataset/LA/LA/ASVspoof2019_LA_dev/flac"
+preprocessing:
+  sr: 16000
+arch:
+  _target_: src.model.RawNet2
+  gru_prenorm: True
+  gru_num_layers: 3
+  gru_hidden_size: 1024
+  reslayer1_out_channels: 20
+  reslayer2_out_channels: 128
+  sinc_abs_after: True
+  sinc_min_low_hz: 0
+  sinc_min_band_hz: 0
+  sinc_requires_grad: False
+  sinc_kernel_size: 1024
+n_gpu: 1
+metrics:
+  shared: []
+  train: []
+  evaluation:
+    - _target_: src.metric.EERMetric
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+  weight:
+    _target_: torch.tensor
+    data:
+      - 0.1
+      - 0.9
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1e-4
+  weight_decay: 1e-4
+trainer:
+  epochs: 100
+  save_dir: "saved/"
+  save_period: 1
+  verbosity: 2
+  monitor: "min eval_loss"
+  early_stop: 1000
+  visualize: "wandb"
+  wandb_project: "as_project"
+  wandb_project_name: "all_hints_included"
+  wandb_project_tags:
+    - "kaggle"
+  len_epoch: 5000
+  grad_norm_clip: 10
+  log_step: 100
+  accumulation_steps: 1
+resume: null
