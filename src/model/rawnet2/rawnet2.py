@@ -70,6 +70,6 @@ class RawNet2(nn.Module):
         x = self.fc(x)
         norm = x.norm(p=2, dim=1, keepdim=True) / 10.0
         x = torch.div(x, norm)
-        x = self.fc_out(self.fc(x))
+        x = self.fc_out(x)
 
         return x
