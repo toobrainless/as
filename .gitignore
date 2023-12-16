@@ -124,3 +124,7 @@ formatter.py
 language_model
 asr_model
 archive
+small
+big
+test_audio
+*.zip

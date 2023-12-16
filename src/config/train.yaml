@@ -28,6 +28,7 @@ preprocessing:
   sr: 16000
 arch:
   _target_: src.model.RawNet2
+  additional_fc: True
   gru_prenorm: True
   gru_num_layers: 3
   gru_hidden_size: 1024
@@ -38,6 +39,7 @@ arch:
   sinc_min_band_hz: 0
   sinc_requires_grad: False
   sinc_kernel_size: 1024
+  sinc_filters_type: "mel-scaled"
 n_gpu: 1
 metrics:
   shared: []

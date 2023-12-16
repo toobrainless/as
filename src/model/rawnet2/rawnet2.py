@@ -14,6 +14,7 @@ class RawNet2(nn.Module):
 
     def __init__(
         self,
+        additional_fc=True,
         gru_prenorm=True,
         gru_num_layers=3,
         gru_hidden_size=1024,
@@ -24,8 +25,10 @@ class RawNet2(nn.Module):
         sinc_min_band_hz=0,
         sinc_requires_grad=False,
         sinc_kernel_size=1024,
+        sinc_filters_type="mel-scaled",
     ):
         super().__init__()
+        self.additional_fc = additional_fc
         self.net = nn.Sequential(
             SincConv_fast(
                 out_channels=reslayer1_out_channels,
@@ -33,6 +36,7 @@ class RawNet2(nn.Module):
                 min_low_hz=sinc_min_low_hz,
                 min_band_hz=sinc_min_band_hz,
                 requires_grad=sinc_requires_grad,
+                filters_type=sinc_filters_type,
             ),
             SwitchABS(sinc_abs_after),
             nn.MaxPool1d(3),
@@ -60,16 +64,19 @@ class RawNet2(nn.Module):
             hidden_size=gru_hidden_size,
             input_size=reslayer2_out_channels,
         )
-        self.fc = nn.Linear(gru_hidden_size, gru_hidden_size)
+
+        if self.additional_fc:
+            self.fc = nn.Linear(gru_hidden_size, gru_hidden_size)
         self.fc_out = nn.Linear(gru_hidden_size, 2)
 
     def forward(self, audio, **kwargs):
         x = audio.unsqueeze(1)
         x = self.net(x)
         x = self.gru(x.transpose(-1, -2))[0][:, -1, :]
-        x = self.fc(x)
-        norm = x.norm(p=2, dim=1, keepdim=True) / 10.0
-        x = torch.div(x, norm)
+        if self.additional_fc:
+            x = self.fc(x)
+            norm = x.norm(p=2, dim=1, keepdim=True) / 10.0
+            x = torch.div(x, norm)
         x = self.fc_out(x)
 
         return x
