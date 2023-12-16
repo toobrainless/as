@@ -1,6 +1,6 @@
-# ASR
+# AS
 
-This is a repository for ASR homework with implementation of Conformer model and some experiments with it. Also that repository can be used as a template for other projects.
+This is a repository for AS homework with implementation of RawNet2 model and some experiments with it. Also that repository can be used as a template for other projects.
 
 ## Getting Started
 
@@ -31,8 +31,7 @@ Now you can use `poetry run` to use environment. For example, `poetry run python
 ### Setup heavy stuff
 
 ```bash
-poetry run python3 setup_lm_model.py
-poetry run python3 setup_conformer.py
+poetry run python3 setup_models.py
 ```
 
 ## Training
@@ -41,12 +40,6 @@ To train model run with default config:
 
 ```bash
 poetry run python3 train.py
-```
-
-To resume training from checkpoint
-
-```bash
-poetry run python3 train.py resume=path\to\saved\checkpoint.pth
 ```
 
 To change config parameters use the following approach:
@@ -71,4 +64,13 @@ To evaluate model run the following script:
 poetry run python3 test.py
 ```
 
-The test config is stored in `configs/test.yaml`, it contains path to the checkpoint, datasets and metrics for evaluation. To change config parameters use the same approach as for training.
+There are two different models for testing big and small. You can specify model by parameter `--model_path`. You can also specify a folder with audio recordings for testing using the parameter `--test_audio_path`. For instance:
+
+```bash
+python3 test.py --model_path small --test_audio_path test_audio/
+```
+
+The repository provides audio for testing in the test_audio folder
+
+
+

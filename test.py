@@ -46,14 +46,18 @@ def main(model_path, test_audio_path):
         audio_stems.append(path.stem)
         audio_batch.append(load_audio(path))
 
-    audio_batch = torch.concatenate(audio_batch)
+    audio_batch = torch.concat(audio_batch)
 
     with initialize(version_base=None, config_path=model_path):
         cfg = compose(config_name="config")
         OmegaConf.resolve(cfg)
 
     model = instantiate(cfg["arch"])
-    model.load_state_dict(torch.load(model_path / "checkpoint.pth")["state_dict"])
+    model.load_state_dict(
+        torch.load(model_path / "checkpoint.pth", map_location=torch.device("cpu"))[
+            "state_dict"
+        ]
+    )
 
     logits = model(audio=audio_batch)
     probabilities = F.softmax(logits, dim=1).tolist()
