@@ -8,22 +8,22 @@ data:
     num_workers: 8
     datasets: 
       - _target_: src.datasets.ASVspoofDataset
-        protocol_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt"
-        data_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_train/flac"
+        protocol_path: "archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt"
+        data_path: "archive/LA/LA/ASVspoof2019_LA_train/flac"
   eval:
     batch_size: 32
     num_workers: 8
     datasets: 
       - _target_: src.datasets.ASVspoofDataset
-        protocol_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
-        data_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_eval/flac"
+        protocol_path: "archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+        data_path: "archive/LA/LA/ASVspoof2019_LA_eval/flac"
   dev:
     batch_size: 32
     num_workers: 8
     datasets: 
       - _target_: src.datasets.ASVspoofDataset
-        protocol_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt"
-        data_path: "/home/toobrainless/as/archive/LA/LA/ASVspoof2019_LA_dev/flac"
+        protocol_path: "archive/LA/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt"
+        data_path: "archive/LA/LA/ASVspoof2019_LA_dev/flac"
 preprocessing:
   sr: 16000
 arch:
