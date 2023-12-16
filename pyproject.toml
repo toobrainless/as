@@ -23,6 +23,7 @@ pandas = "*"
 wandb = "*"
 gdown = "*"
 wget = "*"
+click = "*"
 
 [build-system]
 requires = ["poetry-core"]

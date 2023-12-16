@@ -110,6 +110,7 @@ wandb/
 outputs/
 train_runs/
 test_runs/
+*.csv
 
 # editor, os cache directory
 .vscode/
@@ -126,5 +127,6 @@ asr_model
 archive
 small
 big
-test_audio
+small_copy
+big_copy
 *.zip
